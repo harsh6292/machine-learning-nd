@@ -76,7 +76,7 @@ def predictions_2(data):
         if passenger['Sex'] == "female":
             predictions.append(1)
         else:
-            if passenger['Age'] <= 10:
+            if passenger['Age'] < 10:
                 predictions.append(1)
             else:
                 predictions.append(0)
@@ -104,7 +104,7 @@ def predictions_3(data):
             else:
                 predictions.append(0)
         else:
-            if passenger['Age'] <= 10:
+            if passenger['Age'] < 10:
                 predictions.append(1)
             elif passenger['Pclass'] == 1 and passenger['Parch'] >= 2 and passenger['SibSp'] == 1:
                 predictions.append(1)
