@@ -24,6 +24,7 @@ class LearningAgent(Agent):
         ###########
         # Set any additional class parameters as needed
 
+	self.optimized = True
 	self.decay_factor_a = 0.007
 	self.trial_count = 0
 
@@ -46,9 +47,12 @@ class LearningAgent(Agent):
 	if testing == True:
 	    self.epsilon = 0
 	    self.alpha = 0
-	else:
-	    self.epsilon = 2.0 * math.exp(-(self.decay_factor_a * self.trial_count))
-	    self.trial_count += 1
+	elif self.learning == True:
+	    if self.optimized == True:
+	    	self.epsilon = 1.75 * math.exp(-(self.decay_factor_a * self.trial_count))
+	    	self.trial_count += 1
+	    else:
+		self.epsilon = self.epsilon - 0.05
 
         return None
 
@@ -72,7 +76,10 @@ class LearningAgent(Agent):
         # With the hand-engineered features, this learning process gets entirely negated.
         
         # Set 'state' as a tuple of relevant data for the agent        
-        state = (waypoint, inputs['light'], inputs['left'], inputs['right'], inputs['oncoming'])
+        if self.learning == True:
+	    state = (waypoint, inputs['light'], inputs['left'], inputs['right'], inputs['oncoming'])
+	else:
+	    state = None
 
         return state
 
@@ -92,19 +99,11 @@ class LearningAgent(Agent):
 	    print "Max-Q function called"
 	    print "-----------------------"
 
-	# Get Max Q value present in Q dictionary
-	maxQ = max((self.Q[state]).values())
+	if self.learning == True:
+	    # Get Max Q value present in Q dictionary
+	    maxQ = max((self.Q[state]).values())
 
-	# Get all the actions for Max-Q value
-	actionsList = [action for action, value in (self.Q[state]).iteritems() if value == maxQ]
-
-	# Now choose a random action from list of all Max-Q actions
-	maxQ_Action = random.choice(actionsList)
-
-	if self.env.verbose == True:
-	    print "Max-Q: {}, list of As: {}, Ac taken: {}".format(maxQ, actionsList, maxQ_Action)
-
-        return maxQ_Action
+        return maxQ
 
 
     def createQ(self, state):
@@ -163,10 +162,16 @@ class LearningAgent(Agent):
 	    else:
 		# Epsilon is less than random number, choose an action randomly among Max-Q actions
 		print "Epsilon < random, choosing Max-Q action"
-		action = self.get_maxQ(state)
+		maxQ_Value = self.get_maxQ(state)
 
-	if self.env.verbose == True:
-	    print "Action being chosen: {}".format(action)
+		# Get all the actions for Max-Q value
+        	actionsList = [action for action, value in (self.Q[state]).iteritems() if value == maxQ_Value]
+
+        	# Now choose a random action from list of all Max-Q actions
+        	action = random.choice(actionsList)
+
+        	if self.env.verbose == True:
+            	    print "Max-Q: {}, list of As: {}, Ac taken: {}".format(maxQ_Value, actionsList, action)
 
         return action
 
@@ -182,14 +187,13 @@ class LearningAgent(Agent):
         # When learning, implement the value iteration update rule
         #   Use only the learning rate 'alpha' (do not use the discount factor 'gamma')
 
+	if self.learning == True:
+	    # TODO - Store previous state, reward, action to update their Q values
+	    presentQValue = self.Q[state][action]
+	    self.Q[state][action] = (((1-self.alpha) * presentQValue) + (self.alpha * reward))
 
-	# TODO - Store previous state, reward, action to update their Q values
-	presentQValue = self.Q[state][action]
-	self.Q[state][action] = (((1-self.alpha) * presentQValue) + (self.alpha * reward))
-	#####self.Q[state][action] = (presentQValue + (self.alpha * (reward - presentQValue)))
-
-	if self.env.verbose == True:
-	    print "Learning, previous Q-value: {}, new Q-value: {}".format(presentQValue, self.Q[state][action])
+	    if self.env.verbose == True:
+	    	print "Learning, previous Q-value: {}, new Q-value: {}".format(presentQValue, self.Q[state][action])
 
         return
 
@@ -226,7 +230,7 @@ def run():
     #   learning   - set to True to force the driving agent to use Q-learning
     #    * epsilon - continuous value for the exploration factor, default is 1
     #    * alpha   - continuous value for the learning rate, default is 0.5
-    agent = env.create_agent(LearningAgent, learning=True, epsilon=0.995, alpha=0.45)
+    agent = env.create_agent(LearningAgent, learning=True, epsilon=1.0, alpha=0.5)
     
     ##############
     # Follow the driving agent
