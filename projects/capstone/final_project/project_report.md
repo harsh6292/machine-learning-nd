@@ -1,7 +1,7 @@
 # Machine Learning Engineer Nanodegree
 ## Capstone Project
 Harshvardhan Aggarwal  
-January 14th, 2018
+January 24th, 2018
 
 
 
@@ -13,6 +13,15 @@ January 14th, 2018
 [image4]: ./images/training_data_business_mapping.png "Training data business mapping"
 [image5]: ./images/training_data_distribution.png "Training Data Distribution"
 [image6]: ./images/training_labels.png "Training labels"
+[image7]: ./images/submission_results.png "Submission Results"
+[image8]: ./images/train_image_features_rep.png "Training Image Features"
+[image9]: ./images/train_input_with_features.png "Training Features with Business and Labels"
+[image10]: ./images/labels_one_hot_encoded.png "Training Labels One hot encoded"
+[image11]: ./images/CaffeNet_Architecture.png "CaffeNet Architecture"
+[image12]: ./images/yelp_rest_test_image_1.jpg "Free-Form Test Image-1"
+[image13]: ./images/yelp_rest_test_image_2.jpg "Free-Form Test Image-2"
+[image14]: ./images/free_form_output.png "Free-Form Output"
+
 
 ## I. Definition
 
@@ -28,7 +37,7 @@ The main goal of this project is to look at various pictures of a restaurant bus
 
 The problem can be considered as a classification problem, where images can have multiple class labels assigned to them. A user searching for a particular restaurant, say kid friendly, will help deliver results which are useful to them and in the end saving time.
 
-
+<br>
 
 ### Metrics
 The following evaluation metrics can be used in this case:
@@ -36,7 +45,6 @@ The following evaluation metrics can be used in this case:
    The F(beta) score can be calculated as a measure of precision and recall.
 
    **_Precision_** = Sum (True Positives) / Sum (True Positives + False Positives)  
-
    **_Recall_** = Sum (True Positives) / Sum (True Positives + False Negatives)
 
    ###### F(beta) =  
@@ -47,7 +55,6 @@ The following evaluation metrics can be used in this case:
 
 
 ## II. Analysis
-
 ### Data Exploration
 The dataset for this problem is obtained from Kaggle Competition "Yelp Restaurant Photo Classification" (Refer [1] and [2]). This dataset contains thousands of user uploaded images for restaurants. These images contain images of food, drinks of various cuisines, restaurant interiors, exteriors etc belonging to a particular restaurant. Similarly for all other restaurants, several types of images are present.
 
@@ -88,7 +95,7 @@ The dataset also has 9 categories of labels to be predicted upon. They are:
 | 8 | good_for_kids  |
 
 
-Hence, for each business there is clearly defined multiple output labels which identifies the type or category of restaurant.
+Hence, for each business there is a clearly defined multiple output labels which identifies the type or category of restaurant.
 
 So, for example, below is the mapping of training business with their labels.
 
@@ -126,22 +133,23 @@ Similarly, the number of images per business for testing set are in line with th
 ### Algorithms and Techniques
 The algorithm and techniques used in this project includes use of convolution neural networks to extract the features from images and then using these features as an attribute in a supervised learning algorithm like linear regression or support vector machines.
 
-During training process, a CNN with many layers would be used to extract the high-level and low-level features from the images. I incorporated Caffe to make use of multiple core of GPU's at a single time to reduce time extracting features. Caffe is built to support parallel processing on multiple cores of GPU.
+During training process, a CNN with many layers is used to extract the high-level and low-level features from the images. I incorporated Caffe to make use of multiple core of GPU's at a single time to reduce time extracting features. Caffe is built to support parallel processing on multiple cores of GPU.
 
 The tunable parameters for this stage can range from specifying the shape of image to be used to the number of filters at each layer of CNN.
 
-The CNN was chosen to represent an image in terms of numerical features along with business (restaurant) and its labels. The business and combination of multiple image features can be used as input to a supervised learning classifier while labels will act as the output to be predicted upon.
+The CNN was chosen to represent an image in terms of numerical features along with business (restaurant) and its labels. The combination of multiple image features can be used as input to a supervised learning classifier while labels will act as the output to be predicted upon.
 
 The support vector machines are used as supervised learning classifier to assign a label for each business. The tunable parameters for SVM can be the type of kernel used, the initial random state to shuffle data and the gamma variable to determine the variance.
 
 
 The classification of restaurants problem falls into the multi-label classification problems. The multi-label classification problems are the ones where each instance or row of data can be assigned to multiple classes (also called labels) at once. They differ from binary classifiers or multi-class classifiers in way that binary or multi-class classifiers have all classes as mutually exclusive. This means  an instance of data cannot be assigned to more than one label.
 
-This project uses OneVsRestClassifier algorithm, which is an implementation of multi-label classification provided by sklearn using a base classifier of user's choice (e.g. Decision Tree, SVM, Linear Regression). This classifier fits a classifier for each class of label to be predicted upon. In this problem, it will generate 9 types of classifier for each label to output a confidence measure if the particular instance can belong to one of the classes. In the end it outputs all the labels which have a confidence measure as compared to others.
+This project uses OneVsRestClassifier algorithm, which is an implementation of multi-label classification provided by sklearn using a base classifier of user's choice (e.g. Decision Tree, SVM, Linear Regression). This classifier fits a classifier for each class of label to be predicted upon. In this problem, it will generate 9 types of classifier for each label to output a confidence measure if the particular instance can belong to one of the classes. In the end it outputs all the labels which have a high confidence measure as compared to others.
 
+<br>
 
 ### Benchmark
-The benchmark metrics for this project is obtained from Kaggle leaderboard page. The project has a F-beta score of 0.64597 with random guessing algorithm as shown in Kaggle leaderboard page[3]. This will be considered as the benchmark model for this problem.
+The benchmark metrics for this project is obtained from Kaggle leaderboard page. The project has a F-beta score of `0.64597` with random guessing algorithm as shown in Kaggle leaderboard page[3]. This will be considered as the benchmark model for this problem.
 
 A solution model having F-beta score _more_ than the benchmark model can be considered as good model.
 
@@ -165,6 +173,7 @@ The steps performed in pre-processing the data are as follows:
 
 At the end of these steps, all the images were of same size with same order of color channels to provide consistent results.
 
+<br>
 
 ### Implementation
 The implementation step consisted of below main steps:
@@ -190,8 +199,14 @@ Now lets take a detailed look at each of the steps described above.
 
 However, using Caffe was no small feat as setting up of Caffe took a long time on AWS and made sure all the dependencies were up to date. Once the Caffe was up and running, I used the Caffe provided model called `BVLC Reference CaffeNet` which is Caffe's implementation of ImageNet optimized for Caffe framework. The BVLC reference model has 8 layers as shown below:
 
-I used the BVLC CaffeNet to provide image as input and perform computation on the images for all layers. The layer-8 is very specific to CaffeNet as it outputs features based on the number of classes for this model. I used the output of layer-7 as the image features that can be used to classify each business later. The layer-7, also called fc7, provides good representation of all the features for image. Some of the features extracted from images looks like below:
+The image has been taken from the link[6]
+![alt text][image11]
 
+I used the BVLC CaffeNet to provide image as input and perform computation on the images for all layers. The layer-8 is very specific to CaffeNet as it outputs features based on the number of classes for this model. I used the output of layer-7 as the image features that can be used to classify each business later. The layer-7, also called fc7, provides good representation of all the features for image. The output of layer 7 has 4096 nodes, so all the image features consists of 4096 features.
+
+Below is the representation of features for images 5-10 and their first 5 features from 4096 features:
+
+![alt text][image8]
 
 
 **3.** Next, I loaded the business and their output labels from CSV file. This looked like below:
@@ -200,8 +215,11 @@ I used the BVLC CaffeNet to provide image as input and perform computation on th
 
 **4.** The earlier features calculated from images were then averaged out and added as an extra column to above businesses. This created a new attribute to be used by classifier to train and learn which labels are associated with image features. The combination of businesses, features and labels is shown as below:
 
+![alt text][image9]
 
 **5.** The next step was to train the classifier. Before classifying, I used the image features as input to the classifier and labels as the expected output (labels). This is a multi-label classification problem so it required to one hot encode the labels from (0, 1, 2...) to something that can be represented in binary form. I used `sklearn.MultiLabelBinarizer()` to transform the training labels into a 2-D matrix where point in (row x column) having value 1 represents that this data instance (image feature) can be represented by this label column. The output of MultiLabelBinarizer looks like below:
+
+![alt text][image10]
 
 I then used `sklearn.train_test_split()` method to split the data into training and validation set and then used the `sklearn.OneVsRestClassifier()` with SVM as base classifier as explained earlier to be used as classifier algorithm.
 
@@ -258,37 +276,81 @@ The model implemented above with an SVM classifier using `Linear` kernel had an 
 
 The same model with SVM classifier using `RBF` kernel has an even higher accuracy of 0.79. This accuracy result is from the Kaggle website and affirms that this model is stronger than the benchmark model and does a good job in classifying of nearly 80% of images into correct categories.
 
+![alt text][image7]
 
 
 ## V. Conclusion
 
 ### Free-Form Visualization
-In this section, you will need to provide some form of visualization that emphasizes an important quality about the project. It is much more free-form, but should reasonably support a significant result or characteristic about the problem that you want to discuss. Questions to ask yourself when writing this section:
-- _Have you visualized a relevant or important quality about the problem, dataset, input data, or results?_
-- _Is the visualization thoroughly analyzed and discussed?_
-- _If a plot is provided, are the axes, title, and datum clearly defined?_
+To visualize the restaurant image classification, I am using below two images, which are not part of the original Yelp dataset, to see how well they perform.
+
+The first image is shown below:  
+![alt text][image12]
+
+And the second image looks like below:  
+![alt text][image13]
+
+Running the algorithm through these two images produces the following output labels:
+
+![alt text][image14]
+
+The predicted label for the first image based on the table earlier defined is (6 - has_table_service) and (8 - good_for_kids).
+
+Similarly for second image, the algorithm predicts the output labels as (0 - good_for_lunch), (6 - has_table_service) and (8 - good_for_kids)
+
+
+From the yelp pages description of restaurant, the algorithm is quite close to some of the results. For example, both the restaurants are good for kids and algorithm determined correctly based on the inference from training images.
+
+The algorithm is still not perfect as it clearly misses some of the expected labels like 'takes_reservations' and 'restaurant_is_expensive'.
+
 
 ### Reflection
-In this section, you will summarize the entire end-to-end problem solution and discuss one or two particular aspects of the project you found interesting or difficult. You are expected to reflect on the project as a whole to show that you have a firm understanding of the entire process employed in your work. Questions to ask yourself when writing this section:
-- _Have you thoroughly summarized the entire process you used for this project?_
-- _Were there any interesting aspects of the project?_
-- _Were there any difficult aspects of the project?_
-- _Does the final model and solution fit your expectations for the problem, and should it be used in a general setting to solve these types of problems?_
+The process used in developing and coming up with a solution in this project is summarized as:
+
+1. The Kaggle dataset was loaded onto a Amazon AWS Deep Learning Machine Image to take advantage of Caffe.
+2. Caffe framework was setup on the AWS instance.
+3. The training and testing image dataset were fed through a A CaffeNet model called `BVLC Reference CaffeNet` to extract the features.
+4. The reference model's layer 7, called 'fc7', was used as input features to classifier.
+5. The training data set was augmented with the image features along with business id and the output labels.
+6. The output labels in training set was one hot encoded using sklearn.MultiLabelBinarizer().
+7. The sklearn.OneVsRestClassifier() was used for multi-label classification with base classifier for each label being a SVM classifier with rbf kernel.
+8. The training dataset was fitted to the classifier.
+9. The testing dataset consisting of image features was passed to the classifier to predict its output labels.
+10. The multi-labels generated by classifier were submitted to Kaggle for final results.
+
+
+The difficult part of the project has to be working with the Caffe framework. Although the Caffe framework is documented, it was still not enough to get started as errors while setting up the framework keep cropping up if I updated any dependent libraries. I also got many errors initializing Caffe in IPython notebook as the input images were not in the format Caffe expected which took a while to figure it out. The next difficult thing was to storing the features of images. As extracting features took a very long time to complete, it was not feasible to run every time I start the AWS instance and hence required me to store those features.
+
+The interesting aspect of the project was to find out that there are problems and then there are solution algorithms for multi-label classification. This class of problem was entirely new as compared to the coursework. These type of multi-label algorithms are very useful in real-world scenarios like self-driving car where you can classify multiple object in just a single frame.
+
+This project is just a stepping stone in restaurant image classification and can be useful for future implementation to see what other techniques can be augmented to make it more robust.
 
 ### Improvement
-In this section, you will need to provide discussion as to how one aspect of the implementation you designed could be improved. As an example, consider ways your implementation can be made more general, and what would need to be modified. You do not need to make this improvement, but the potential solutions resulting from these changes are considered and compared/contrasted to your current solution. Questions to ask yourself when writing this section:
-- _Are there further improvements that could be made on the algorithms or techniques you used in this project?_
-- _Were there algorithms or techniques you researched that you did not know how to implement, but would consider using if you knew how?_
-- _If you used your final solution as the new benchmark, do you think an even better solution exists?_
+The first improvement that can be made is in using a different mechanism altogether like TensorFlow to take advantage of parallel processing and speed things up. This will likely result in reduction in time to extract features from the thousands of images. Also, the classifier itself can be run inside TensorFlow framework utilizing its speed to shorten the time more.
 
------------
+The second improvement that I researched was using AdaBoost or ensemble method for classification in a multi-label classification setting. I think if we use any of these two methods, they would improve upon the accuracy achieved by rbf kernel in SVM classifier.
 
-**Before submitting, ask yourself. . .**
+Based on the Kaggle leaderboard, it appears there exists a better solution that can increase the accuracy from 0.79 to 0.83 probably by using better classifier that supports multi-label classification problems.
 
-- Does the project report you’ve written follow a well-organized structure similar to that of the project template?
-- Is each section (particularly **Analysis** and **Methodology**) written in a clear, concise and specific fashion? Are there any ambiguous terms or phrases that need clarification?
-- Would the intended audience of your project be able to understand your analysis, methods, and results?
-- Have you properly proof-read your project report to assure there are minimal grammatical and spelling mistakes?
-- Are all the resources used for this project correctly cited and referenced?
-- Is the code that implements your solution easily readable and properly commented?
-- Does the code execute without error and produce results similar to those reported?
+
+## VI. References
+All the references that I used that made me realized this project are as follows:
+
+1. Kaggle Competition Page - https://www.kaggle.com/c/yelp-restaurant-photo-classification
+
+2. Dataset for Project - https://www.kaggle.com/c/yelp-restaurant-photo-classification/data
+
+3. Caffe Framework and Integration with Yelp DB - https://engineeringblog.yelp.com/2015/10/how-we-use-deep-learning-to-classify-business-photos-at-yelp.html
+
+4. Kaggle Benchmark Model value - https://www.kaggle.com/c/yelp-restaurant-photo-classification/leaderboard
+
+5. AlexNet Image classification on ImageNet - http://www.cs.toronto.edu/~fritz/absps/imagenet.pdf
+
+6. CaffeNet - https://www.slideshare.net/ducha/visual-object-tracking-review
+
+7. Kaggle blog posts inspiration:
+  1. https://www.kaggle.com/c/yelp-restaurant-photo-classification/discussion/20127
+  2. http://blog.kaggle.com/2016/04/28/yelp-restaurant-photo-classification-winners-interview-1st-place-dmitrii-tsybulevskii/
+  3. https://www.kaggle.com/c/yelp-restaurant-photo-classification/discussion/18762
+
+8. Getting started with Caffe http://adilmoujahid.com/posts/2016/06/introduction-deep-learning-python-caffe/
