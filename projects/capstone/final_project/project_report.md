@@ -21,6 +21,13 @@ January 24th, 2018
 [image12]: ./images/yelp_rest_test_image_1.jpg "Free-Form Test Image-1"
 [image13]: ./images/yelp_rest_test_image_2.jpg "Free-Form Test Image-2"
 [image14]: ./images/free_form_output.png "Free-Form Output"
+[image15]: ./images/1299.jpg "Train dataset Image - 1"
+[image16]: ./images/131861.jpg "Train dataset Image - 2"
+[image17]: ./images/training_data_augmentation_distribution.png "Augmented Training dataset distribution"
+[image18]: ./images/999.jpg "Original training image"
+[image19]: ./images/999_rotated.jpg "Rotated training image"
+[image20]: ./images/999_gamma.jpg "Gamma adjusted training image"
+[image21]: ./images/grid_search_best_classifiers.png "Best classifier for each label class"
 
 
 ## I. Definition
@@ -30,12 +37,17 @@ This project focuses on analyzing and predicting various types of labels a Resta
 
 With users wanting a good recommendation for trying out new restaurants, it becomes increasingly necessary to develop a robust machine learning algorithm that can correctly classify restaurants based on various parameters like the quality of food, average wait times, kid friendly etc. This problem is just a stepping stone in classifying different types of business based on user uploaded pictures of restaurants and their qualities in order to provide better services than manual task are able to achieve.
 
+A similar research is done to use image-recognition algorithms to classify the type of food being eaten by a person in restaurant for the purpose of automatic food journaling. [9]
+
 
 ### Problem Statement
 
 The main goal of this project is to look at various pictures of a restaurant business, identify its core features from the images and classify them based on their features. There are thousands of photos uploaded by users everyday in different lighting conditions, shapes, angle that it becomes difficult to properly tag them without the help of automated system.
 
-The problem can be considered as a classification problem, where images can have multiple class labels assigned to them. A user searching for a particular restaurant, say kid friendly, will help deliver results which are useful to them and in the end saving time.
+The problem can be considered as a classification problem, where images can have multiple output class labels assigned to them. For example, a scenery image may contain roads, mountains or plains, clouds etc. In this case the output labels represent whether an image contains cloud in it or whether there is home in the image etc. Similarly for restaurants, a multiple output class label can be described as whether a image contains food or drinks, or the type of food in the plate. A user searching for a particular restaurant, say kid friendly, will help deliver results which are useful to them and in the end saving time.
+
+For this problem, I plan to use different methods involving scaling the input images to a consistent size, changing the RBG color images to different format for processing. I also plan to use multi-label classification algorithm called OneVsRestClassifier to predict multiple labels for a single data input while using SVM classifier as the base. This is explained in detail in next few sections.
+
 
 <br>
 
@@ -53,6 +65,8 @@ The following evaluation metrics can be used in this case:
 
   The benchmark model for this problem has a F-beta score of 0.64597 with random guessing algorithm [3]. A solution model having F-beta score _more_ than the benchmark model can be considered as good model.
 
+The F-1 score was chosen for this model as this score gives more accurate outcome than in comparison to other metrics like accuracy metric. Accuracy only measures the correctness of predicted labels whereas F-1 score will measure both the precision (Number of samples correct out of total predicted to be positive) and recall (number of samples correct out of total correct samples) of the classifier and produce results that accurately maps test's correctness.
+
 
 ## II. Analysis
 ### Data Exploration
@@ -68,7 +82,17 @@ Following are some specifications of the dataset
 | Total number of businesses in training set   |  1,996 |
 | Total number of businesses in testing set   | 10,000  |
 
-The dataset contains mapping of photos to a particular business in both train and test set. The images are of high quality and mostly have different height and width.
+The dataset contains mapping of photos to a particular business in both train and test set. The images contained in the dataset are of different sizes. Examples of some of the images from training
+dataset is shown below:
+
+An image with lower quality and dimensions of 500x375 pixels (width x height)  
+![alt text][image15]
+
+
+An image with better quality than previous one and dimensions of 375x500 pixels (width x height)  
+![alt text][image16]
+
+
 
 The below image shows how the training photos id's are mapped to each business id in the dataset.
 
@@ -110,11 +134,11 @@ The training dataset did have some abnormalities, which were identified while wo
 
 
 ### Exploratory Visualization
-The plot below shows the number of photos present for each class of label for restaurant.
+The plot below shows the number of businesses that represent for each class of label for restaurant.
 
 ![alt text][image5]
 
-From the above plot, it is evident that each class of labels that we are trying to predict upon has sufficient number of photos to extract features and make a prediction. This ensures that no particular class of label will be biased in training.
+From the above plot, it is evident that there is some bias towards the output labels of (5, 6, 8) while the classes (0, 4, 7) are under-represented in this dataset. I did some data augmentation like rotation and gamma correction to some of the images represented by output labels (0, 4, 7) to increase their number in dataset and prevent bias from happening. The augmentation step is explained in the data pre-processing section below.
 
 
 Also, the below images show the distribution of images between different businesses.
@@ -172,6 +196,28 @@ The steps performed in pre-processing the data are as follows:
 
 
 At the end of these steps, all the images were of same size with same order of color channels to provide consistent results.
+
+The next step in pre-processing was augmenting the dataset with images that under-represented output class labels (0, 4, 7). I specifically added images for these classes to prevent any bias from happening and the classifier actually learns the features and not memorize them.
+
+To add data to existing training dataset, I used the scikit learn transform library to transform the images by performing following steps:
+1. Rotating the images by either 90, 180 or 270 degress randomly.
+2. Adjusting the brightness (gamma) of the image by decreasing the brightness by quarter or half or doubling the brightness randomly.
+
+Example of an image that went through pre-processing steps is shown below:
+
+The original image in the training dataset:  
+![alt text][image18]
+
+The rotated image (image rotated randomly by 90 degrees):  
+![alt text][image19]
+
+
+The brightness adjusted image (brightness reduced by half):  
+![alt text][image20]
+
+
+The updated plot showing the frequency of businesses that represent each class of label is shown below:  
+![alt text][image17]
 
 <br>
 
@@ -241,11 +287,22 @@ The first step in refinement was to choose between a custom Convolution Neural n
 The main tradeoff between choosing the two was the training time for computing features for 234,842 training images and 237,152 testing images. Using a custom built CNN was taking long time to process all the images (sometimes more than 6 hours). The accuracy of finding the correct features was also a concern as if enough different features are not present, the classifier may not produce good results. Due to processing time and accuracy, I used the existing Caffe model to extract the features.
 
 
-The second refinement I made was adjusting the parameters of Support Vector Machine used in the OneVsRestClassifier algorithm.
+The second refinement I made was adjusting the parameters of Support Vector Machine used in the OneVsRestClassifier algorithm. I first used the linear kernel as the base classifier. I then switched to an RBF kernel with a random state as my next classifier.
 
-The results for the linear kernel SVM on testing dataset had an accuracy of 0.75. Given the dataset (images) and the features extracted from it, it seems that this data is not linearly separable as many image features were conflicting with the labeled outputs. So, I used the 'Radial basis function (rbf)' kernel to create hyperplanes so as to differentiate between different features. The results for using rbf kernel on testing dataset resulted in improved accuracy of 0.79.
+The results for the linear kernel SVM on testing dataset had an F-1 score of 0.75. Given the dataset (images) and the features extracted from it, it seems that this data is not linearly separable as many image features were conflicting with the labeled outputs. So, I used the 'Radial basis function (rbf)' kernel to create hyperplanes so as to differentiate between different features. The results for using rbf kernel on testing dataset resulted in improved F-1 score of 0.79.
 
 
+The third refinement I made was making use of sklearn's `GridSearchCV` algorithm with SVM as the estimator to find the best SVM parameters that fits the data. The various parameters used for doing an exhaustive search by GridSearchCV were:
+1. Kernel type for SVM: either linear or rbf.
+2. The 'C' parameter: Values were [1, 10, 50]
+3. The 'Gamma' parameter: Values were [1e-3, 1e-2, 0.2]
+
+
+The results for the GridSearchCV with maximum results have the following parameters for each output label:
+
+![alt text][image21]
+
+However, the actual F-1 score obtained by the GridSearchCV classifier on testing dataset on Kaggle website was lower than SVM classifier with rbf kernel and no tuning of other hyperparameters. The F-1 score for GridSearchCV is 0.713.
 
 
 ## IV. Results
@@ -263,18 +320,22 @@ The choice of using CaffeNet reference model assures that any changes in input i
 
 The choice of OneVsRestClassifier() seems appropriate for this multi-label classifying problem as this algorithm will try to fit a classifier for each class of labels in order to predict the correct labels for testing set.
 
-This model choice is confirmed by the fact that it was able to achieve a high accuracy of 0.79 on 237,152 testing images alone.
+This model choice is confirmed by the fact that it was able to achieve a high F-1 score of 0.79 on 237,152 testing images alone using rbf kernel with SVM classifier as the base classifier.
 
-Also, the model achieved a high accuracy score of 0.829 on validation dataset (25% of training dataset was reserved to be used as validation data).
+Also, the model achieved a high F-1 score of 0.829 on validation dataset (25% of training dataset was reserved to be used as validation data).
 
 
 ### Justification
 
-The benchmark model earlier mentioned had an accuracy rate of 0.64597 with random guessing as the algorithm chosen.
+The benchmark model earlier mentioned had an F-1 score of 0.64597 with random guessing as the algorithm chosen.
 
-The model implemented above with an SVM classifier using `Linear` kernel had an accuracy of 0.75.
+The model implemented above with an SVM classifier using `Linear` kernel had an F-1 score of 0.75.
 
-The same model with SVM classifier using `RBF` kernel has an even higher accuracy of 0.79. This accuracy result is from the Kaggle website and affirms that this model is stronger than the benchmark model and does a good job in classifying of nearly 80% of images into correct categories.
+The same model with SVM classifier using `RBF` kernel has an even higher F-1 score of 0.79.
+
+The F-1 score obtained by using GridSearchCV with best parameters as rbf kernel in an SVM classifier having C and gamma values as 10 and 1e-2, respectively, is 0.713.
+
+Hence, the F-1 score obtained by rbf kernel SVM (0.79), which is obtained from the Kaggle website, affirms that this model is stronger than the benchmark model and does a good job in classifying of nearly 80% of images into correct categories.
 
 ![alt text][image7]
 
@@ -354,3 +415,7 @@ All the references that I used that made me realized this project are as follows
   3. https://www.kaggle.com/c/yelp-restaurant-photo-classification/discussion/18762
 
 8. Getting started with Caffe http://adilmoujahid.com/posts/2016/06/introduction-deep-learning-python-caffe/
+
+9. V. Bettadapura, E. Thomaz, A. Parnami, G. D. Abowd and I. Essa, "Leveraging Context to Support Automated Food Recognition in Restaurants," 2015 IEEE Winter Conference on Applications of Computer Vision, Waikoloa, HI, 2015, pp. 580-587.
+doi: 10.1109/WACV.2015.83
+http://ieeexplore.ieee.org/abstract/document/7045937/
