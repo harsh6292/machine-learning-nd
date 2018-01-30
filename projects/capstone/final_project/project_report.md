@@ -28,6 +28,13 @@ January 24th, 2018
 [image19]: ./images/999_rotated.jpg "Rotated training image"
 [image20]: ./images/999_gamma.jpg "Gamma adjusted training image"
 [image21]: ./images/grid_search_best_classifiers.png "Best classifier for each label class"
+[image22]: ./images/linear_svm_learning_curve.png "Learning curve for Linear SVM"
+[image23]: ./images/rbf_svm_learning_curve.png "Learning curve for RBF kernel SVM"
+[image24]: ./images/convolution_filter_explanation.gif "Convolution Layer Processing"
+[image25]: ./images/maxpool_explanation.jpg "Maxpool layer explanation"
+[image26]: ./images/svm_max_margin_explanation.png "SVM Maximum Margin Explanation"
+
+
 
 
 ## I. Definition
@@ -49,7 +56,6 @@ The problem can be considered as a classification problem, where images can have
 For this problem, I plan to use different methods involving scaling the input images to a consistent size, changing the RBG color images to different format for processing. I also plan to use multi-label classification algorithm called OneVsRestClassifier to predict multiple labels for a single data input while using SVM classifier as the base. This is explained in detail in next few sections.
 
 
-<br>
 
 ### Metrics
 The following evaluation metrics can be used in this case:
@@ -155,16 +161,47 @@ Similarly, the number of images per business for testing set are in line with th
 
 
 ### Algorithms and Techniques
-The algorithm and techniques used in this project includes use of convolution neural networks to extract the features from images and then using these features as an attribute in a supervised learning algorithm like linear regression or support vector machines.
+The algorithm and techniques used in this project includes use of `convolution neural networks` to extract the features from images and then using these features as an attribute in a supervised learning algorithm like linear regression or support vector machines.
 
-During training process, a CNN with many layers is used to extract the high-level and low-level features from the images. I incorporated Caffe to make use of multiple core of GPU's at a single time to reduce time extracting features. Caffe is built to support parallel processing on multiple cores of GPU.
+In a CNN, there are mainly 5 layers which forms the overall Architecture to produce an output. These are as follows:
+1. **Input Layer** - As the name implies, this is the layer where input is fed to the network. An input can be an image with (width x height x number of color channels).
 
-The tunable parameters for this stage can range from specifying the shape of image to be used to the number of filters at each layer of CNN.
+2. **Convolution layer** - This layer is the building block of CNN. This layer consists of set of learnable filters which are small in width and height but extends through the full depth of the input (the color channels). For example lets consider the image below:
+
+  ![alt text][image24]
+
+  In the above image, the input image (marked in green) is of size (5x5) and filter size is (3x3). At each pass, we slide the filter (marked in yellow) from top left corner to across the full width and height of image. At each position of filter, we compute the dot product between the pixels covered by filter and the filter itself to give a convolved feature (marked with pink) of size (3x3). If the filter depth was suppose 12 filters, each filter will slide over the input image to produce an output convolved feature set of size (3x3x12).
+
+3. **Activation layer** - This layer will apply an activation function to capture only elements which are above some thresholds. Examples of some activation functions are sigmoid, Relu etc. The output of relu layer has size same as input layer size.
+
+4. **Pooling layer** - The pooling layer downsamples the input into smaller dimensions mainly in height and width. This is done to reduce the size of parameters and computations in the network and prevent overfitting. The pooling layer operates independently on every depth slice of the input and resizes it spatially. An example of how maxpool layer operates is shown below:
+
+  ![alt text][image25]
+
+  In this layer a filter of an appropriate size is chosen. In this example the, the output from Convolution layer produced (4x4) output. If the maxpool layer size is (2x2) and stride (amount by which to slide the filter) is 2, then the max pool filter is slided from top left corner. At position (0,0) the maxmimum of of values covered by (2x2) filter is chosen (here 6). The filter is slided by stride of 2 pixels. In next step at position (0,2), the maxmimum value of area covered by filter is chosen (this time its 8) and so on.
+
+5. **Fully connected layer** - The fully connected layer is also called dense layer and can transform 3-D input from previous layer into a flattened output. The nodes in this layer are fully connected each and every node in the input. The final dense layer may have output nodes with size of the number of classes to predict upon.
+
+
+During training process, a CNN with many layers is used to extract the high-level and low-level features from the images. I incorporated Caffe to make use of multiple core of GPU's at a single time to reduce time extracting features. Caffe is built to support parallel processing on multiple cores of GPU. The tunable parameters for this stage can range from specifying the shape of image to be used to the number of filters and size of each filter at each layer of CNN.
+
 
 The CNN was chosen to represent an image in terms of numerical features along with business (restaurant) and its labels. The combination of multiple image features can be used as input to a supervised learning classifier while labels will act as the output to be predicted upon.
 
-The support vector machines are used as supervised learning classifier to assign a label for each business. The tunable parameters for SVM can be the type of kernel used, the initial random state to shuffle data and the gamma variable to determine the variance.
+<br>
 
+The next algorithm I used in this project was `Support Vector Machines (SVM)` to classify the output received from the convolution layers. The support vector machines are used as supervised learning classifier to assign a label for each business.
+
+A linear SVM classifier works by drawing a hyperplane (a line segment) to separate the different classes so as to isolate maximum points belonging to one class from another. It does so by choosing a hyperplane that maximizes the margin between the classes as shown below:
+
+![alt text][image26]
+
+SVM classifier can also be trained to perform a non-linear separation of training inputs using what is called a kernel trick. Kernels are functions which convert low dimensional input space to a higher dimensional space. A kernel can be either a linear algebra function or a polynomial function of varying degree that best separates the various input classes.
+
+The tunable parameters for SVM can be the type of kernel used, the initial random state to shuffle data and the gamma variable to determine the variance.
+
+
+<br>
 
 The classification of restaurants problem falls into the multi-label classification problems. The multi-label classification problems are the ones where each instance or row of data can be assigned to multiple classes (also called labels) at once. They differ from binary classifiers or multi-class classifiers in way that binary or multi-class classifiers have all classes as mutually exclusive. This means  an instance of data cannot be assigned to more than one label.
 
@@ -316,11 +353,25 @@ The final model consisted of the following algorithms and techniques:
 3. The image features extracted above for both training and testing were used as input to OneVsRestClassifier().
 4. The OneVsRestClassifier() used SVM as base classifier with `rbf` kernel to classify training images and predict on testing images.
 
-The choice of using CaffeNet reference model assures that any changes in input images will provide a similar fingerprint of image features if image input dataset was changed.
 
 The choice of OneVsRestClassifier() seems appropriate for this multi-label classifying problem as this algorithm will try to fit a classifier for each class of labels in order to predict the correct labels for testing set.
 
-This model choice is confirmed by the fact that it was able to achieve a high F-1 score of 0.79 on 237,152 testing images alone using rbf kernel with SVM classifier as the base classifier.
+I used sklearn's `learning_curve` function to plot the training and validation set scores (validation set consisted of 25% of original dataset) average over 3-5 cycles.
+
+The learning curve for Linear SVM classifier is shown below:  
+
+![alt text][image22]
+
+Surprisingly, the linear SVM performs too badly on the validation scores since this score never reaches beyond 0.2 even after learning over many samples of data.
+
+
+The learning curve for an SVM classifier using 'rbf' kernel is shown below:  
+
+![alt text][image23]
+
+The above image captures a real world scenario where both training score and validation score have very less values in the beginning as the classifier is still learning to predict correctly. At the end both training and validation score flattens out which indicates that classifier has learnt successfully.
+
+The SVM classifier with rbf kernel model is thus a good choice for this problem and is confirmed by the fact that it was able to achieve a high F-1 score of 0.79 on 237,152 testing images alone.
 
 Also, the model achieved a high F-1 score of 0.829 on validation dataset (25% of training dataset was reserved to be used as validation data).
 
